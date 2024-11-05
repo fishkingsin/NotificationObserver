@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
@@ -9,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "hk.com.nmg.notificationobserver"
-        minSdk = 30
+        minSdk = 26
         targetSdk = 33
         versionCode = 1
         versionName = "1.0"
@@ -18,6 +20,22 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+        val file = file("app.properties")
+        val appProperties = Properties()
+        appProperties.load(file.inputStream())
+
+        val smtpUsername = appProperties["SMTP_USERNAME"].toString()
+        val smtpPassword = appProperties["SMTP_PASSWORD"].toString()
+        val host = appProperties["HOST"].toString()
+        val from = appProperties["FROM"].toString()
+        val to = appProperties["TO"].toString()
+
+        buildConfigField("String", "SMTP_USERNAME", "\"$smtpUsername\"")
+        buildConfigField("String", "SMTP_PASSWORD", "\"$smtpPassword\"")
+        buildConfigField("String", "HOST", "\"$host\"")
+        buildConfigField("String", "from", "\"$from\"")
+        buildConfigField("String", "to", "\"$to\"")
+
     }
 
     buildTypes {
@@ -27,6 +45,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+
         }
     }
     compileOptions {
@@ -47,6 +66,14 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+    testOptions {
+        unitTests {
+            isReturnDefaultValues = true
+            isIncludeAndroidResources = true
+        }
+    }
+
 }
 
 dependencies {
@@ -59,12 +86,35 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.localbroadcastmanager)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.material.v110)
 
-    testImplementation(libs.junit)
+    implementation (libs.android.mail)
+    implementation (libs.kotlinx.coroutines.core)
+
+    implementation (libs.retrofit)
+    implementation (libs.converter.gson)
+    implementation(platform(libs.okhttp.bom))
+    implementation(libs.okhttp)
+    implementation(libs.logging.interceptor)
+    implementation(libs.ses)
+    implementation(files("../libs/screenlogger-release.aar"))
+
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
+
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    testImplementation(libs.junit)
+    testImplementation (libs.robolectric)
+    testImplementation (libs.mockito.core)
+    testImplementation (libs.mockito.inline)
+    testImplementation (libs.mockito.kotlin)
+    testImplementation (libs.kotlinx.coroutines.test)
+    testImplementation (libs.mockito.inline.v520)
+    testImplementation (libs.json)
 }
