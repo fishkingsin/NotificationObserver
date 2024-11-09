@@ -51,7 +51,7 @@ class AmazonSESService(
         " for <a href='https://www.java.com'>Java</a>."
     )
 
-    fun run() {
+    fun run(success: () -> Unit, fail: (Exception) -> Unit) {
         // Create a Properties object to contain connection configuration information.
 
         val props: Properties = System.getProperties()
@@ -115,10 +115,12 @@ class AmazonSESService(
                 print(messageId)
             }
             transport.close()
+            success()
         } catch (ex: Exception) {
             if (BuildConfig.DEBUG) Log.d(TAG,"The email was not sent.")
             if (BuildConfig.DEBUG) Log.d(TAG,"Error message: " + ex.message)
             if (BuildConfig.DEBUG) Log.d(TAG,"Error message: " + ex.printStackTrace())
+            fail(ex)
         } finally {
             // Close and terminate the connection.
             transport.close()

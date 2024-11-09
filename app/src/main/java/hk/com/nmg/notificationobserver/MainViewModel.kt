@@ -3,7 +3,6 @@ package hk.com.nmg.notificationobserver
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
-import dev.tools.screenlogger.ScreenLog
 import hk.com.nmg.notificationobserver.EmailService.Email
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
@@ -27,9 +26,9 @@ class MainViewModel(
     private val emailService: EmailServiceInterface = EmailService(
         emailServiceListener = emailServiceListener
     )) : ViewModel() {
-    private val _logs: MutableStateFlow<List<ScreenLog>> = MutableStateFlow(emptyList())
+    private val _logs: MutableStateFlow<List<AppPushModel>> = MutableStateFlow(emptyList())
     @OptIn(FlowPreview::class)
-    private val logs: Flow<List<ScreenLog>>
+    private val logs: Flow<List<AppPushModel>>
         get() = _logs.filter { it ->
             it.isNotEmpty()
         }.debounce(5000)
@@ -51,10 +50,10 @@ class MainViewModel(
     }
 
 
-    private fun sendEmail(logs: List<ScreenLog>) {
+    private fun sendEmail(logs: List<AppPushModel>) {
 
-        val json = Gson().toJson(logs)
-        val body = json.toString().jsonToHtmlTable()
+
+        val body = logs.toHtmlTable()
         emailService.send(
             Email(
                 to = BuildConfig.to,

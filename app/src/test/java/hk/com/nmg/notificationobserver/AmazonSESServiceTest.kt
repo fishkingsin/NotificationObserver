@@ -1,5 +1,6 @@
 package hk.com.nmg.notificationobserver
 
+import android.util.Log
 import com.google.gson.Gson
 import dev.tools.screenlogger.ScreenLog
 import org.junit.Test
@@ -8,21 +9,26 @@ class AmazonSESServiceTest {
 
     @Test
     fun run() {
-        val log = listOf(
-            ScreenLog(
-            "actionTag",
-            "screenLogType",
-            "screenLog",
-            System.currentTimeMillis()
+        val list = listOf(
+            AppPushModel(
+                appName = "App Name",
+                date = "Date",
+                receivedTime = "Received Time",
+                appPushTitle = "App Push Title",
+                appPushContent = "App Push Content"
+            )
         )
-        )
-        val json = Gson().toJson(log)
+
 
         AmazonSESService(email = EmailService.Email(
-            to = BuildConfig.to,
+            to = BuildConfig.from,
             from = BuildConfig.from,
             subject = "Test",
-            body = json.toString().jsonToHtmlTable()
-        )).run()
+            body = list.toHtmlTable()
+        )).run(success = {
+            println("Email sent")
+        }) {
+            println("Failed")
+        }
     }
 }

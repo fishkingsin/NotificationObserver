@@ -19,11 +19,11 @@ class EmailServiceTest {
     fun send() {
         val sut = EmailService(emailServiceListener)
         sut.send(EmailService.Email(
-            to = BuildConfig.to,
+            to = BuildConfig.from,
             from = BuildConfig.from,
             "Test", "Test"))
 
-        verify(emailServiceListener, Mockito.times(1)).onSuccess(any())
+        verify(emailServiceListener, Mockito.times(1)).onSuccess(null)
 
     }
 }

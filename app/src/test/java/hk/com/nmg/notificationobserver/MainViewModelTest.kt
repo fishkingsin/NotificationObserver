@@ -51,15 +51,19 @@ class MainViewModelTest {
         val notificationManager = NotificationManager
 
         val sut = MainViewModel(notificationManager, emailService = emailService)
-        val log = listOf(ScreenLog(
-            "actionTag",
-            "screenLogType",
-            "screenLog",
-            System.currentTimeMillis()
-        ))
-        val json = Gson().toJson(log)
+
+        val list = listOf(
+            AppPushModel(
+                appName = "App Name",
+                date = "Date",
+                receivedTime = "Received Time",
+                appPushTitle = "App Push Title",
+                appPushContent = "App Push Content"
+            )
+        )
+
         notificationManager.send(
-            log.first()
+            list.first()
         )
         advanceTimeBy(6000)
         verify(emailService, Mockito.times(1)).send(
@@ -67,7 +71,7 @@ class MainViewModelTest {
                 to = BuildConfig.to,
                 from = BuildConfig.from,
                 subject = "Notification Observer Logs",
-                body = json.toString().jsonToHtmlTable()
+                body = list.toHtmlTable()
             )
         )
     }
