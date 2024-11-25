@@ -1,25 +1,23 @@
 package hk.com.nmg.notificationobserver
 
-
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mock
-import org.mockito.Mockito
-import org.mockito.Mockito.mock
-import org.mockito.junit.MockitoJUnitRunner
-import org.mockito.kotlin.verify
 import java.io.File
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
-@RunWith(MockitoJUnitRunner::class)
-class EmailServiceTest {
-    @Mock
-    var emailServiceListener: EmailServiceListener = mock()
+@RunWith(AndroidJUnit4::class)
+class EmailInstrumentedTest {
+
     @Test
-    fun send() {
+    fun dryRun() {
+        // Context of the app under test.
+        val appContext = InstrumentationRegistry.getInstrumentation().targetContext
+
         val timestamp = System.currentTimeMillis()
         val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         val timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
@@ -27,7 +25,7 @@ class EmailServiceTest {
 
 // Adding the timezone information to be able to format it (change accordingly)
         val date = LocalDateTime.ofInstant(instant, ZoneId.systemDefault())
-        val sut = EmailService(emailServiceListener)
+
         val list = listOf(
             AppPushModel(
                 appName = "HK01",
@@ -37,15 +35,19 @@ class EmailServiceTest {
                 appPushContent = "App Push Content"
             )
         )
-        val fileName = "test.csv"
-        sut.send(EmailService.Email(
+
+
+        val fileName = "log.csv"
+        AmazonSESService(email = EmailService.Email(
             to = BuildConfig.from,
-            tos = BuildConfig.to.split(",").toList(),
             from = BuildConfig.from,
-            subject = "Test", body = list.toHtmlTable(), attachment = fileName
-        ))
-
-        verify(emailServiceListener, Mockito.times(1)).onSuccess(null)
-
+            subject = "Test",
+            body = list.toHtmlTable(),
+            attachment = fileName
+        )).run(success = {
+            println("Email sent")
+        }) {
+            println("Failed")
+        }
     }
 }

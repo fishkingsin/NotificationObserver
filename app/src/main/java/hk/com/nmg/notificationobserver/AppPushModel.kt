@@ -7,3 +7,10 @@ data class AppPushModel(
     val appPushTitle: String,
     val appPushContent: String
 )
+
+
+fun  List<AppPushModel>.toCSVString(): String {
+    return joinToString(separator = "\n") {
+        "${it.appName},${it.date},${it.receivedTime},${it.appPushTitle},${it.appPushContent}"
+    }
+}

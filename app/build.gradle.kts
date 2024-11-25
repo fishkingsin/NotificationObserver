@@ -3,6 +3,7 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
+    alias(libs.plugins.firebase)
 }
 
 android {
@@ -50,12 +51,12 @@ android {
     }
 
     packaging {
+
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
             excludes += "/META-INF/DEPENDENCIES"
             excludes += "/META-INF/LICENSE"
-            excludes += "/META-INF/LICENSE.txt"
-            excludes += "/META-INF/license.txt"
+
             excludes += "META-INF/INDEX.LIST"
             excludes += "/META-INF/NOTICE"
             excludes += "/META-INF/NOTICE.txt"
@@ -63,8 +64,10 @@ android {
             excludes += "/META-INF/ASL2.0"
             excludes += "/META-INF/*.kotlin_module"
             excludes += "META-INF/io.netty.versions.properties"
+            pickFirsts.add("META-INF/LICENSE.txt")
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
@@ -110,6 +113,13 @@ dependencies {
     implementation (libs.android.mail)
     implementation (libs.kotlinx.coroutines.core)
 
+    // Import the BoM for the Firebase platform
+    implementation(platform("com.google.firebase:firebase-bom:33.6.0"))
+
+    // Add the dependency for the Analytics library
+    // When using the BoM, you don't specify versions in Firebase library dependencies
+    implementation("com.google.firebase:firebase-analytics")
+
     implementation (libs.retrofit)
     implementation (libs.converter.gson)
     implementation(platform(libs.okhttp.bom))
@@ -117,6 +127,10 @@ dependencies {
     implementation(libs.logging.interceptor)
     implementation(libs.ses)
     implementation(files("../libs/screenlogger-release.aar"))
+    implementation(libs.play.services.measurement.api)
+    implementation(libs.firebase.common.ktx)
+    implementation(libs.google.api.client)
+    implementation(libs.opencsv)
 
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

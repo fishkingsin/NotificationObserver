@@ -1,22 +1,28 @@
 package hk.com.nmg.notificationobserver
 
+import android.R.id.message
 import android.util.Log
 import com.sun.mail.smtp.SMTPTransport
 import java.util.Date
 import java.util.Properties
+import javax.activation.DataHandler
+import javax.activation.DataSource
+import javax.activation.FileDataSource
 import javax.mail.Message
+import javax.mail.Multipart
 import javax.mail.PasswordAuthentication
 import javax.mail.Session
-import javax.mail.Transport
 import javax.mail.internet.InternetAddress
+import javax.mail.internet.MimeBodyPart
 import javax.mail.internet.MimeMessage
+import javax.mail.internet.MimeMultipart
 
 
 class AmazonSESService(
     // Replace sender@example.com with your "From" address.
     // This address must be verified.
     val FROM: String = BuildConfig.from,
-    val FROMNAME: String = "Single Detection",
+    val FROMNAME: String = "Signal Detection",
     // Replace recipient@example.com with a "To" address. If your account
     // is still in the sandbox, this address must be verified.
     val TO: String = BuildConfig.to,
@@ -33,7 +39,7 @@ class AmazonSESService(
     // for more information.
     val HOST: String = BuildConfig.HOST,
     // The port you will connect to on the Amazon SES SMTP endpoint.
-    val SUBJECT: String = "${Date()} Single Detection Report",
+    val SUBJECT: String = "${Date()} Signal Detection Report",
     val email: EmailService.Email? = null
 ) {
 
@@ -73,19 +79,32 @@ class AmazonSESService(
         // Create a message with the specified information.
         val msg = MimeMessage(session)
 
-        msg.subject = SUBJECT
+        msg.setSubject(SUBJECT,"UTF-8")
         if (email != null) {
             msg.setFrom(InternetAddress(email.from))
-            msg.setRecipient(Message.RecipientType.TO, InternetAddress(email.to, false))
+            if (email.tos != null) {
+                msg.setRecipients(Message.RecipientType.TO, email.tos.map { InternetAddress(it, false) } .toTypedArray())
+            } else {
+                msg.setRecipient(Message.RecipientType.TO, InternetAddress(email.to, false))
+            }
 
-            msg.setContent(email.body, "text/html")
+            msg.setText(email.body, "utf-8", "html")
         } else {
             msg.setFrom(InternetAddress(FROM))
             msg.setRecipient(Message.RecipientType.TO, InternetAddress(TO, false))
-            msg.setContent(BODY, "text/html")
+            msg.setText(BODY, "utf-8", "html")
         }
 
+        val messageBodyPart = MimeBodyPart()
+        val multipart: Multipart = MimeMultipart()
+        email?.attachment?.let {
+            val source: DataSource = FileDataSource(email.attachment)
+            messageBodyPart.setDataHandler(DataHandler(source))
+            messageBodyPart.fileName = "log.csv"
+            multipart.addBodyPart(messageBodyPart)
 
+            msg.setContent(multipart)
+        }
         // Add a configuration set header. Comment or delete the
         // next line if you are not using a configuration set
 //        msg.setHeader("X-SES-CONFIGURATION-SET", CONFIGSET)

@@ -1,9 +1,7 @@
 package hk.com.nmg.notificationobserver
 
-import android.util.Log
-import com.google.gson.Gson
-import dev.tools.screenlogger.ScreenLog
 import org.junit.Test
+import java.io.File
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -13,6 +11,7 @@ class AmazonSESServiceTest {
 
     @Test
     fun run() {
+        // require vpn
 
         val timestamp = System.currentTimeMillis()
         val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -37,7 +36,8 @@ class AmazonSESServiceTest {
             to = BuildConfig.from,
             from = BuildConfig.from,
             subject = "Test",
-            body = list.toHtmlTable()
+            body = list.toHtmlTable(),
+            attachment = "test.csv"
         )).run(success = {
             println("Email sent")
         }) {

@@ -1,34 +1,57 @@
 package hk.com.nmg.notificationobserver
 
 
+import android.app.Notification
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
-import android.text.TextUtils
 import android.util.Log
-import dev.tools.screenlogger.ScreenLog
-import dev.tools.screenlogger.ScreenLoggerHelper
-import dev.tools.screenlogger.ScreenLoggerHelper.SCREEN_LOG_TYPE_REQUEST
 import dev.tools.screenlogger.ScreenLoggerHelper.SCREEN_LOG_TYPE_TRACKING
 import hk.com.nmg.notificationobserver.NotificationManager.send
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.HashMap
 
 
 class NotificationListener() :
     NotificationListenerService() {
+    private val TAG: String = "NotificationListener"
+
+
+
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         sbn.notification.extras.keySet().forEach {
-            Log.d("NotificationListener", "onNotificationPosted: $it")
+            if (BuildConfig.DEBUG) Log.d("NotificationListener", "onNotificationPosted: $it")
         }
-        val message = sbn.notification.extras.keySet().map { sbn.notification.extras.getCharSequence(it) }
+        val bundle = sbn.notification.extras
+        val lines: Array<out CharSequence>? = bundle.getCharSequenceArray(Notification.EXTRA_TEXT_LINES)
+        var temp = ""
+        if (lines != null) {
+            for (line in lines) {
+                temp = "line: $line\n"
+            }
+        }
+        Log.d(TAG, "temp $temp")
+        val message = sbn.notification.extras.keySet().map {
+            try {
+                if (BuildConfig.DEBUG) Log.d(TAG, "sbn.notification.extras.get(it) ${sbn.notification.extras.get(it)}")
+                return@map sbn.notification.extras.getCharSequence(it)
+            } catch (e: Exception) {
+               return@map ""
+            }
+        }.filter { it.isNullOrBlank() }
 
         val screenLog = "${sbn.notification.extras.getCharSequence("android.title")} ${
             sbn.notification.extras.getCharSequence("android.text")
         } $message"
         val packageName = sbn.packageName
+        if (packageName.contains("com.google.android")) {
+            if (BuildConfig.DEBUG) Log.d(TAG, "filtered $packageName")
+            return
+        }
         OnScreenLogger().log(
             this,
             packageName,
@@ -37,11 +60,11 @@ class NotificationListener() :
         )
 
 
-        Log.d(
+        if (BuildConfig.DEBUG) Log.d(
             "NotificationListener",
             "onNotificationPosted: $packageName title ${sbn.notification.extras.getCharSequence("android.title")}"
         )
-        Log.d(
+        if (BuildConfig.DEBUG) Log.d(
             "NotificationListener",
             "onNotificationPosted: ${sbn.notification.extras.getCharSequence("android.text")}"
         )
@@ -52,15 +75,20 @@ class NotificationListener() :
 
 // Adding the timezone information to be able to format it (change accordingly)
         val date = LocalDateTime.ofInstant(instant, ZoneId.systemDefault())
-        send(
-            AppPushModel(
-                appName = packageName,
-                date = dateFormatter.format(date),
-                receivedTime = timeFormatter.format(date),
-                appPushTitle = sbn.notification.extras.getCharSequence("android.title").toString(),
-                appPushContent = sbn.notification.extras.getCharSequence("android.text").toString()
+
+        CoroutineScope(Dispatchers.IO).launch {
+            send(
+                AppPushModel(
+                    appName = packageName,
+                    date = dateFormatter.format(date),
+                    receivedTime = timeFormatter.format(date),
+                    appPushTitle = sbn.notification.extras.getCharSequence("android.title")
+                        .toString(),
+                    appPushContent = sbn.notification.extras.getCharSequence("android.text")
+                        .toString()
+                )
             )
-        )
+        }
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification?) {
